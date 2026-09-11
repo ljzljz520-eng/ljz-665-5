@@ -9,7 +9,12 @@ const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'cinema-ledger-secret-2026';
+// 不在源码中硬编码密钥：优先读取环境变量，未设置时生成随机密钥（重启后旧 token 失效）
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  未设置 JWT_SECRET 环境变量，已使用随机生成的密钥，服务重启后所有登录状态将失效。');
+  console.warn('⚠️  生产环境请务必通过环境变量设置固定密钥，例如：JWT_SECRET=<随机长字符串> npm start');
+}
 const TOKEN_EXPIRES = '8h';
 
 const CATEGORIES = ['放映机', '音响', '银幕', '控制台'];

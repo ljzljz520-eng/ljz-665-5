@@ -25,12 +25,21 @@
 | 管理员 | admin | admin123 |
 | 普通员工 | staff | staff123 |
 
+> ⚠️ 默认账号密码仅用于本地开发，部署到生产环境前请登录数据库修改密码哈希，
+> 或在 `server/seed.js` 中改为强密码后重新初始化。
+
 ## 启动
 
 ```bash
 npm install
 npm run seed    # 初始化数据库与默认账号/示例数据（首次）
 npm start       # http://localhost:3000
+```
+
+生产环境请通过环境变量指定 JWT 签名密钥（未设置时系统会生成随机密钥，重启后所有登录状态失效）：
+
+```bash
+JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))") npm start
 ```
 
 技术栈：Node.js + Express + better-sqlite3（零外部数据库依赖，数据存 data/ledger.db）+
