@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>影院放映设备台账</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ 登录页 ============ -->
+<div id="loginView" class="login-view hidden">
+  <div class="login-card">
+    <div class="login-logo">🎬</div>
+    <h1>影院放映设备台账</h1>
+    <p class="login-sub">放映机 · 音响 · 银幕 · 控制台</p>
+    <form id="loginForm">
+      <label>用户名
+        <input type="text" id="loginUsername" placeholder="请输入用户名" autocomplete="username" required>
+      </label>
+      <label>密码
+        <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">登 录</button>
+      <div id="loginError" class="login-error"></div>
+    </form>
+    <div class="login-hint">
+      演示账号：管理员 <b>admin / admin123</b>　普通员工 <b>staff / staff123</b>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 主界面 ============ -->
+<div id="mainView" class="hidden">
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">🎬</span>
+      <span class="title">影院放映设备台账</span>
+    </div>
+    <div class="topbar-right">
+      <span id="userBadge" class="user-badge"></span>
+      <span id="userName" class="user-name"></span>
+      <button class="btn btn-ghost" id="logoutBtn">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <div class="filters">
+        <input type="search" id="fKeyword" class="input" placeholder="搜索：影厅 / 品牌 / 序列号 / 责任人…">
+        <select id="fHall" class="input"><option value="">全部影厅</option></select>
+        <select id="fCategory" class="input"><option value="">全部类别</option></select>
+        <select id="fStatus" class="input"><option value="">全部状态</option></select>
+        <button class="btn btn-ghost" id="resetBtn">重置</button>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost admin-only" id="tplBtn">⬇ 导入模板</button>
+        <button class="btn btn-ghost admin-only" id="importBtn">⇪ 批量导入</button>
+        <button class="btn btn-primary admin-only" id="addBtn">＋ 新增设备</button>
+      </div>
+    </div>
+
+    <!-- 表格 -->
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:56px">#</th>
+            <th>影厅</th>
+            <th>设备类别</th>
+            <th>品牌</th>
+            <th>序列号</th>
+            <th>责任人</th>
+            <th>状态</th>
+            <th>更新时间</th>
+            <th class="admin-only" style="width:130px">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="emptyTip" class="empty hidden">暂无数据</div>
+    </div>
+
+    <!-- 分页 -->
+    <div class="pager">
+      <span id="totalText" class="pager-total"></span>
+      <div class="pager-btns">
+        <button class="btn btn-ghost btn-sm" id="prevBtn">‹ 上一页</button>
+        <span id="pageText" class="pager-page"></span>
+        <button class="btn btn-ghost btn-sm" id="nextBtn">下一页 ›</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ 新增/编辑弹窗 ============ -->
+<div id="editModal" class="modal-mask hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="editTitle">新增设备</h3>
+      <button class="modal-close" data-close="editModal">×</button>
+    </div>
+    <form id="editForm" class="modal-body">
+      <input type="hidden" id="eId">
+      <div class="form-grid">
+        <label>影厅 <i>*</i>
+          <input type="text" id="eHall" class="input" placeholder="如：1号厅" maxlength="50" required>
+        </label>
+        <label>设备类别 <i>*</i>
+          <select id="eCategory" class="input" required></select>
+        </label>
+        <label>品牌 <i>*</i>
+          <input type="text" id="eBrand" class="input" placeholder="如：Barco DP4K-32B" maxlength="100" required>
+        </label>
+        <label>序列号 <i>*</i>
+          <input type="text" id="eSerial" class="input" placeholder="如：BRC-2023-0001" maxlength="60" required>
+        </label>
+        <label>责任人 <i>*</i>
+          <input type="text" id="eOwner" class="input" placeholder="如：张伟" maxlength="50" required>
+        </label>
+        <label>状态 <i>*</i>
+          <select id="eStatus" class="input" required></select>
+        </label>
+      </div>
+      <div id="editError" class="form-error"></div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close="editModal">取消</button>
+        <button type="submit" class="btn btn-primary" id="saveBtn">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ 导入弹窗 ============ -->
+<div id="importModal" class="modal-mask hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>批量导入设备</h3>
+      <button class="modal-close" data-close="importModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-steps">
+        <p><b>第 1 步</b>：下载导入模板（CSV 格式，可用 Excel / WPS 打开编辑）</p>
+        <button class="btn btn-ghost btn-sm" id="tplBtn2">⬇ 下载导入模板</button>
+        <p style="margin-top:14px"><b>第 2 步</b>：按模板填写后选择文件上传（支持 UTF-8 / GBK 编码的 .csv）</p>
+        <div class="file-drop" id="fileDrop">
+          <input type="file" id="fileInput" accept=".csv" hidden>
+          <span id="fileDropText">点击选择文件，或将 CSV 文件拖到此处</span>
+        </div>
+        <div id="importProgress" class="import-progress hidden">正在导入…</div>
+      </div>
+      <div id="importResult" class="import-result hidden"></div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close="importModal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 删除确认 ============ -->
+<div id="delModal" class="modal-mask hidden">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>确认删除</h3>
+      <button class="modal-close" data-close="delModal">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="delText"></p>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close="delModal">取消</button>
+        <button class="btn btn-danger" id="delConfirmBtn">删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastBox" class="toast-box"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
