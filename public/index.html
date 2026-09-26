@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>影院放映设备台账</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- 登录页 -->
+<div id="loginView" class="login-wrap hidden">
+  <form id="loginForm" class="login-card" autocomplete="off">
+    <div class="login-logo">🎬</div>
+    <h1>影院放映设备台账</h1>
+    <p class="login-sub">Cinema Projection Equipment Ledger</p>
+    <label>用户名
+      <input type="text" id="loginUser" placeholder="admin / staff" required>
+    </label>
+    <label>密码
+      <input type="password" id="loginPwd" placeholder="请输入密码" required>
+    </label>
+    <button type="submit" class="btn btn-primary btn-block" id="loginBtn">登 录</button>
+    <div class="login-hint">
+      管理员 <b>admin / admin123</b>（可维护）<br>
+      普通员工 <b>staff / staff123</b>（仅查询）
+    </div>
+  </form>
+</div>
+
+<!-- 主界面 -->
+<div id="appView" class="hidden">
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">🎬</span>
+      <div>
+        <div class="topbar-title">影院放映设备台账</div>
+        <div class="topbar-sub">放映机 · 音响 · 银幕 · 控制台</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span id="userInfo" class="user-info"></span>
+      <span id="roleBadge" class="badge"></span>
+      <button class="btn btn-ghost" id="logoutBtn">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 查询工具栏 -->
+    <section class="card toolbar">
+      <div class="toolbar-row">
+        <div class="field">
+          <label>关键字</label>
+          <input type="text" id="fQ" placeholder="品牌 / 序列号 / 责任人">
+        </div>
+        <div class="field">
+          <label>设备类型</label>
+          <select id="fType"><option value="">全部</option></select>
+        </div>
+        <div class="field">
+          <label>影厅</label>
+          <select id="fHall"><option value="">全部</option></select>
+        </div>
+        <div class="field">
+          <label>状态</label>
+          <select id="fStatus"><option value="">全部</option></select>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-primary" id="searchBtn">查询</button>
+          <button class="btn btn-default" id="resetBtn">重置</button>
+        </div>
+      </div>
+      <div class="toolbar-row toolbar-admin" id="adminBar">
+        <button class="btn btn-primary" id="addBtn">＋ 新增设备</button>
+        <button class="btn btn-success" id="importBtn">📥 Excel 导入</button>
+        <button class="btn btn-default" id="tplBtn">📄 下载导入模板</button>
+        <button class="btn btn-default" id="exportBtn">📤 导出台账</button>
+      </div>
+    </section>
+
+    <!-- 台账表格 -->
+    <section class="card">
+      <div class="table-head">
+        <h2>设备清单</h2>
+        <span id="totalCount" class="total-count"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>设备类型</th><th>影厅</th><th>品牌</th><th>序列号</th>
+              <th>责任人</th><th>状态</th><th>更新时间</th>
+              <th class="col-action admin-only">操作</th>
+            </tr>
+          </thead>
+          <tbody id="equipTbody"></tbody>
+        </table>
+      </div>
+      <div id="emptyTip" class="empty-tip hidden">暂无符合条件的设备记录</div>
+    </section>
+  </main>
+</div>
+
+<!-- 新增/编辑弹窗 -->
+<div class="modal-mask hidden" id="formModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="formTitle">新增设备</h3>
+      <button class="modal-close" data-close="formModal">×</button>
+    </div>
+    <form id="equipForm">
+      <div class="form-grid">
+        <label>设备类型 <em>*</em>
+          <select name="type" id="efType" required></select>
+        </label>
+        <label>影厅 <em>*</em>
+          <input name="hall" id="efHall" list="hallList" placeholder="如：1号厅" required>
+          <datalist id="hallList"></datalist>
+        </label>
+        <label>品牌 <em>*</em>
+          <input name="brand" id="efBrand" placeholder="如：Barco 巴可" required>
+        </label>
+        <label>序列号 <em>*</em>
+          <input name="serial" id="efSerial" placeholder="设备唯一序列号" required>
+        </label>
+        <label>责任人 <em>*</em>
+          <input name="owner" id="efOwner" placeholder="负责人姓名" required>
+        </label>
+        <label>状态 <em>*</em>
+          <select name="status" id="efStatus" required></select>
+        </label>
+      </div>
+      <div class="form-error hidden" id="formError"></div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-default" data-close="formModal">取消</button>
+        <button type="submit" class="btn btn-primary" id="formSubmit">保 存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 导入弹窗 -->
+<div class="modal-mask hidden" id="importModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Excel 批量导入</h3>
+      <button class="modal-close" data-close="importModal">×</button>
+    </div>
+    <div class="modal-body">
+      <ol class="import-steps">
+        <li>先下载标准模板，按列填写设备信息（类型仅支持：放映机 / 音响 / 银幕 / 控制台）。</li>
+        <li>序列号为唯一字段，平台已存在或文件内重复都会导致该行失败。</li>
+        <li>上传后通过校验的行立即入库；失败行可下载修正后重新导入。</li>
+      </ol>
+      <input type="file" id="importFile" accept=".xlsx">
+      <div class="import-result hidden" id="importResult"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-default" data-close="importModal">关闭</button>
+      <a class="btn btn-default" id="dlFailedBtn" style="display:none" href="#">⬇ 下载失败行</a>
+      <button class="btn btn-success" id="doImportBtn">开始导入</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
